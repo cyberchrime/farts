@@ -1,0 +1,9 @@
+*/iverilog_dump.v
+*/\.fuse*
+*/*.fst
+*/__pycache__
+*/sim_build
+*/results.xml
+tb/**/iverilog_dump.v
+*/*.gtkw
+.venv

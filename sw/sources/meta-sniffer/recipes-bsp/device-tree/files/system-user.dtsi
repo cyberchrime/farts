@@ -1,0 +1,22 @@
+/* system-user.dtsi */
+/ {
+    reserved-memory {
+	#address-cells = <1>;
+	#size-cells = <1>;
+        ranges;
+        dma_buffer: dma_buffer@10000000 {
+            compatible = "shared-dma-pool";
+            reusable;
+            reg = <0x10000000 0x0e000000>;
+            label = "dma_buffer";
+        };
+    };
+
+    sniffer@40000000 {
+        compatible = "art,sniffer";
+	reg = <0x40000000 0x2000>;
+	interrupt-parent = <&intc>;
+	interrupts = <0 29 4>;
+	memory-region = <&dma_buffer>;
+    };
+};

@@ -1,0 +1,10 @@
+**/.venv
+sw/build
+!sw/build/conf
+.viminfo
+.wget-hsts
+vivado*
+.cache
+.Xilinx
+Xilinx_Unified_2022.1_0420_0327.tar.gz
+.java
