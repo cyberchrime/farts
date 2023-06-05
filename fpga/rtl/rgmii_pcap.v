@@ -340,7 +340,7 @@ async_timestamp_fifo (
     // AXI input
     .s_clk(rx_clk),
     .s_rst(rx_rst),
-    .s_axis_tdata(axis_timestamp_tdata),
+    .s_axis_tdata(axis_timestamp_tdata_ext),
     .s_axis_tkeep(8'b1),
     .s_axis_tvalid(axis_timestamp_async_tvalid),
     .s_axis_tready(),
@@ -596,12 +596,12 @@ axis_ts_prepend (
     .start_packet(m_axis_timestamp_tready_reg)
 );
 
-assign [63:0] axis_timestamp_tdata_ext = {axis_timestamp_tdata[63:1], dropped_reg};
+wire [63:0] axis_timestamp_tdata_ext = {axis_timestamp_tdata[63:1], dropped_reg};
 
 reg dropped_reg = 0;
 
-always @(rgmii_clk) begin
-	dropped_reg <= dropped_reg | rx_axis_tuser;
+always @(posedge rgmii_rx_clk) begin
+    dropped_reg <= dropped_reg | rx_axis_tuser;
 
     if (axis_timestamp_tvalid && axis_timestamp_async_tvalid) begin
 		dropped_reg <= 1'b0;

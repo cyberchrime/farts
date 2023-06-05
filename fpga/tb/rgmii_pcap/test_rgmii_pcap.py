@@ -132,6 +132,43 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, backpressure
     await RisingEdge(dut.rgmii_rx_clk)
     await RisingEdge(dut.rgmii_rx_clk)
 
+async def run_test_bad_frame(dut, payload_data=None, backpressure_inserter=None, speed=1000e6, ifg=12):
+    tb = TB(dut, speed)
+
+    tb.rgmii_source.ifg = ifg
+
+    await tb.reset()
+    tb.set_backpressure_generator(backpressure_inserter)
+
+    dut.ts_nsec.value = 400
+    dut.ts_sec.value = 2
+    dut.enable.value = 1
+    dut.mii_select = 0 if speed == 1000e6 else 1
+
+    for _ in range(100):
+        await RisingEdge(dut.rx_clk)
+
+    assert tb.axis_sink.empty()
+
+    frame = GmiiFrame.from_payload(b'test data is a great thing but more bytes are required. Otherwise, padding is applied.', tx_complete=Event())
+    frame.error = 15*[0] + [1, 0]
+
+    await tb.rgmii_source.send(frame)
+    await frame.tx_complete.wait()
+
+    axis_frame = await tb.axis_sink.recv()
+    axis_data = axis_frame.tdata
+
+    assert len(axis_data) == len(frame.get_payload()) + 16, f"Frame 1: {axis_data}\nFrame 2 {frame.get_payload()}"
+    assert axis_data[16:] == frame.get_payload()
+    assert int.from_bytes(axis_data[0:4], "little", signed=False) == 3
+    assert int.from_bytes(axis_data[4:8], "little", signed=False) == 400
+    assert int.from_bytes(axis_data[8:12], "little", signed=False) == len(frame.get_payload())
+    assert int.from_bytes(axis_data[12:16], "little", signed=False) == len(frame.get_payload())
+
+
+
+
 def size_list():
     return list(range(64, 128)) + [512, 1514] + [64]*10 + \
         [64, 128, 256, 512, 1024, 64, 64, 64, 1500, 64, 64, 64, 1500, 1500]
@@ -146,6 +183,12 @@ def cycle_pause():
 
 
 if cocotb.SIM_NAME:
+    factory = TestFactory(run_test_bad_frame)
+    factory.add_option("payload_data", [incrementing_payload])
+    factory.add_option("backpressure_inserter", [None, cycle_pause])
+    factory.add_option("speed", [1000e6, 100e6, 10e6])
+    factory.generate_tests()
+
     factory = TestFactory(run_test_rx)
     factory.add_option("payload_lengths", [size_list])
     factory.add_option("payload_data", [incrementing_payload])
