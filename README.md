@@ -48,7 +48,7 @@ Afterwards, execute the following commands:
 ```
 git clone --recurse-submodules https://github.com/cyberchrime/farts.git
 cd farts
-docker build -t sniffer docker
+podman build -t sniffer docker
 podman run -ti --userns=keep-id -v=/opt/Xilinx:/opt/Xilinx:Z -v=.:/home/sniffer/ws:Z --rm sniffer:latest
 ```
 
