@@ -37,19 +37,19 @@ licenses of the subprojects.
 ```
 
 
-## Podman setup
+## Setup
 
 First, install Vivado from
 from https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
+This guide assumes it is installed to /opt
 
 Afterwards, execute the following commands:
 
 ```
-cd docker
-docker build -t sniffer .
-docker compose create 
-docker start docker-Sniffing-Sniffer-1
-docker attach docker-Sniffing-Sniffer-1
+git clone --recurse-submodules https://github.com/cyberchrime/farts.git
+cd farts
+docker build -t sniffer docker
+podman run -ti --userns=keep-id -v=/opt/Xilinx:/opt/Xilinx:Z -v=.:/home/sniffer/ws:Z --rm sniffer:latest
 ```
 
 

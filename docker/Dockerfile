@@ -82,33 +82,14 @@ RUN useradd -rm -d /home/sniffer -s /bin/bash -g 1000 -G sudo,staff -u 1000 snif
 # do not require password on sudo for users in the sudo group
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# make /opt writable for user 'sniffer'
-RUN chgrp staff /opt && chmod g+w /opt 
-
-# TODO: add repo
-
-# switch to sniffer user and home dir as workdir
-ADD --chown=1000:1000 $INSTALL_FILE /vivado-installer
-COPY --chown=1000:1000 install_config.txt /vivado-installer/
-
-USER sniffer
-WORKDIR /home/sniffer
-
-RUN /vivado-installer/Xilinx_Unified_2022.1_0420_0327/xsetup \
-       --agree XilinxEULA,3rdPartyEULA \
-       --batch Install \
-       --config /vivado-installer/install_config.txt
-
-
-SHELL ["/bin/bash", "-c"]
-
-# create entrypoint
-USER root
-
 RUN echo 'source /opt/Xilinx/Vivado/2022.1/settings64.sh' >> /etc/bash.bashrc && \
     rm -rf /vivado-installer
 
 COPY entrypoint.sh /bin
+SHELL ["/bin/bash", "-c"]
+
+# create entrypoint
 ENTRYPOINT ["/bin/entrypoint.sh"]
 
 USER sniffer
+WORKDIR /home/sniffer/ws
