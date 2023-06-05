@@ -200,7 +200,7 @@ axis_async_fifo_adapter # (
     .ID_WIDTH(1),
     .DEPTH(FIFO_DEPTH),
     .DROP_WHEN_FULL(1),
-    .DROP_BAD_FRAME(1),
+    .DROP_BAD_FRAME(0),
     .FRAME_FIFO(1)
 )
 rx_data_fifo (
@@ -554,8 +554,7 @@ axis_frame_len_prepend (
     .m_axis_tuser(m_axis_tuser_int),
     .m_axis_tkeep(m_axis_tkeep_int),
 
-    .pre_tdata({frame_len_prepend_value, frame_len_prepend_value}),
-    .pre_tkeep(8'hff),
+    .prepend_value({frame_len_prepend_value, frame_len_prepend_value}),
 
     .start_packet(m_axis_frame_len_tready_reg)
 );
@@ -592,8 +591,7 @@ axis_ts_prepend (
     .m_axis_tuser(m_axis_tuser),
     .m_axis_tkeep(m_axis_tkeep),
 
-    .pre_tdata(m_axis_timestamp_tdata),
-    .pre_tkeep(8'hff),
+    .prepend_value(m_axis_timestamp_tdata),
 
     .start_packet(m_axis_timestamp_tready_reg)
 );

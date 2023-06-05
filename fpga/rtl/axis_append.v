@@ -28,15 +28,12 @@ with aRTS. If not, see <https://www.gnu.org/licenses/>.
 /*
  * AXI4-Stream Timestamp Prepender
  */
-module axis_prepend #
+module axis_append #
 (
     parameter DATA_WIDTH = 8,
     parameter KEEP_WIDTH = DATA_WIDTH/8,
     parameter PREPEND_VALUE_WIDTH = 32,
     parameter USER_WIDTH = 1,
-    // input is delayed by a single cycle
-    // valid values: 0, 1
-    parameter DELAY = 0,
     // endianess of the inserted timestamp
     // valid values: "LITTLE" (little endian), "BIG" (big endian)
     parameter LITTLE_ENDIAN = 1
@@ -67,10 +64,10 @@ module axis_prepend #
     output wire [KEEP_WIDTH-1:0]          m_axis_tkeep,
 
     /*
-     * Value to prepend
+     * Value to append
      */
-    input  wire [PREPEND_VALUE_WIDTH-1:0] pre_tdata,
-    input  wire [KEEP_WIDTH-1:0]          pre_tkeep,
+    input  wire [PREPEND_VALUE_WIDTH-1:0] post_tdata,
+    input  wire [KEEP_WIDTH-1:0]          post_tkeep,
 
     /*
      * packet start
@@ -121,53 +118,28 @@ always @(posedge clk) begin
             keep_regs[i] <= {KEEP_WIDTH{1'b0}};
         end
     end else begin
-        start_packet_reg <= start_packet;
-
-        if (DELAY ? start_packet_reg : start_packet) begin
-            stall_reg <= 1'b0;
-            if (LITTLE_ENDIAN) begin
-                for (i = 0; i < PIPELINE_LENGTH; i = i + 1) begin
-                    // set pipeline to prepend value
-                    data_regs[PIPELINE_LENGTH-i-1] <= pre_tdata[i*DATA_WIDTH +: DATA_WIDTH];
-                    valid_regs[PIPELINE_LENGTH-i-1] <= 1'b1;
-                    last_regs[PIPELINE_LENGTH-i-1] <= 1'b0;
-                    keep_regs[PIPELINE_LENGTH-i-1] <= pre_tkeep[i];
-                    user_regs[PIPELINE_LENGTH-i-1] <= {USER_WIDTH{1'b0}};
-                end
-            end else begin
-                for (i = 0; i < PIPELINE_LENGTH; i = i + 1) begin
-                    // set pipeline to prepend value
-                    data_regs[i] <= pre_tdata[i*DATA_WIDTH +: DATA_WIDTH];
-                    valid_regs[i] <= 1'b1;
-                    last_regs[i] <= 1'b0;
-                    keep_regs[i] <= pre_tkeep[i];
-                    user_regs[i] <= {USER_WIDTH{1'b0}};
-                end
-            end
-        end else begin
-            if (m_axis_tready && !stall_reg) begin
-                for (i = 1; i < PIPELINE_LENGTH; i = i + 1) begin
-                    data_regs[i] <= data_regs[i-1];
-                    valid_regs[i] <= valid_regs[i-1];
-                    last_regs[i] <= last_regs[i-1];
-                    user_regs[i] <= user_regs[i-1];
-                    keep_regs[i] <= keep_regs[i-1];
-                end
-                data_regs[0] <= s_axis_tdata;
-                valid_regs[0] <= s_axis_tvalid;
-                last_regs[0] <= s_axis_tlast;
-                user_regs[0] <= s_axis_tuser;
-                keep_regs[0] <= s_axis_tkeep;
+	    if (m_axis_tready && !stall_reg) begin
+		    for (i = 1; i < PIPELINE_LENGTH; i = i + 1) begin
+			    data_regs[i] <= data_regs[i-1];
+			    valid_regs[i] <= valid_regs[i-1];
+			    last_regs[i] <= last_regs[i-1];
+			    user_regs[i] <= user_regs[i-1];
+			    keep_regs[i] <= keep_regs[i-1];
+		    end
+		    data_regs[0] <= s_axis_tdata;
+		    valid_regs[0] <= s_axis_tvalid;
+		    last_regs[0] <= s_axis_tlast;
+			user_regs[0] <= s_axis_tuser;
+		    keep_regs[0] <= s_axis_tkeep;
 
 
-                if (last_regs[PIPELINE_LENGTH-1]) begin
-                    valid_regs[PIPELINE_LENGTH-1] <= 1'b0;
-                    stall_reg <= 1'b1;
-            end
-            end else if (stall_reg) begin
-                valid_regs[PIPELINE_LENGTH-1] <= 1'b0;
-            end
-        end
+		    if (last_regs[PIPELINE_LENGTH-1]) begin
+			    valid_regs[PIPELINE_LENGTH-1] <= 1'b0;
+			    stall_reg <= 1'b1;
+		    end
+	    end else if (stall_reg) begin
+		    valid_regs[PIPELINE_LENGTH-1] <= 1'b0;
+	    end
     end
 end
 
