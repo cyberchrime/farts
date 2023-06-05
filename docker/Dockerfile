@@ -7,6 +7,7 @@ ARG INSTALL_FILE="Xilinx_Unified_2022.1_0420_0327.tar.gz"
 ARG DEBIAN_FRONTEND=noninteractive
 RUN dpkg --add-architecture i386 \
     && apt-get update && apt-get -y install \
+    iverilog \
     apt-utils \
     gawk \
     wget \
@@ -68,6 +69,10 @@ RUN dpkg --add-architecture i386 \
     ca-certificates curl sudo xorg dbus dbus-x11 ubuntu-gnome-default-settings gtk2-engines \
     ttf-ubuntu-font-family fonts-ubuntu-font-family-console fonts-droid-fallback lxappearance \
     && rm -rf /var/lib/apt/lists/*
+
+# Setup testbench environment
+COPY requirements.txt /tmp
+RUN pip3 install -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # generate locales (required by bitbake's python scripts)
 RUN locale-gen en_US.UTF-8
