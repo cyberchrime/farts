@@ -1,19 +1,19 @@
 [submodule "fpga/lib/verilog-axis"]
 	path = fpga/lib/verilog-axis
-	url = https://github.com/alexforencich/verilog-axis
+	url = https://github.com/cyberchrime/verilog-axis
 [submodule "fpga/lib/verilog-ethernet"]
 	path = fpga/lib/verilog-ethernet
-	url = https://github.com/alexforencich/verilog-ethernet
+	url = https://github.com/cyberchrime/verilog-ethernet
 [submodule "fpga/lib/verilog-axi"]
 	path = fpga/lib/verilog-axi
-	url = https://github.com/alexforencich/verilog-axi
+	url = https://github.com/cyberchrime/verilog-axi
 [submodule "sw/sources/poky"]
 	path = sw/sources/poky
 	url = https://github.com/cyberchrime/poky
 	branch = honister
 [submodule "sw/sources/meta-openembedded"]
 	path = sw/sources/meta-openembedded
-	url = https://github.com/cyberchrime/meta-openembedded.git
+	url = https://github.com/cyberchrime/meta-openembedded
 	branch = honister
 [submodule "sw/sources/meta-xilinx-tools"]
 	path = sw/sources/meta-xilinx-tools
