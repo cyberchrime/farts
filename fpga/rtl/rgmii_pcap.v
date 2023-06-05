@@ -200,7 +200,7 @@ axis_async_fifo_adapter # (
     .ID_WIDTH(1),
     .DEPTH(FIFO_DEPTH),
     .DROP_WHEN_FULL(1),
-    .DROP_BAD_FRAME(1),
+    .DROP_BAD_FRAME(0),
     .FRAME_FIFO(1)
 )
 rx_data_fifo (
@@ -595,6 +595,18 @@ axis_ts_prepend (
 
     .start_packet(m_axis_timestamp_tready_reg)
 );
+
+assign [63:0] axis_timestamp_tdata_ext = {axis_timestamp_tdata[63:1], dropped_reg};
+
+reg dropped_reg = 0;
+
+always @(rgmii_clk) begin
+	dropped_reg <= dropped_reg | rx_axis_tuser;
+
+    if (axis_timestamp_tvalid && axis_timestamp_async_tvalid) begin
+		dropped_reg <= 1'b0;
+    end
+end
 
 
 endmodule
