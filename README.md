@@ -41,17 +41,28 @@ licenses of the subprojects.
 
 First, install Vivado from
 from https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
-This guide assumes it is installed to /opt
+This guide assumes it is installed to `/opt`.
 
-Afterwards, execute the following commands:
+First, setup the repository:
 
 ```
 git clone --recurse-submodules https://github.com/cyberchrime/farts.git
 cd farts
+```
+
+Afterwards, setup the container. For `Podman`, use
+
+```
 podman build -t sniffer docker
 podman run -ti --userns=keep-id -v=/opt/Xilinx:/opt/Xilinx:Z -v=.:/home/sniffer/ws:Z --rm sniffer:latest
 ```
 
+When using docker, use these commands instead:
+
+```
+docker build -t sniffer docker
+docker run -ti -v=/opt/Xilinx:/opt/Xilinx -v=${PWD}:/home/sniffer/ws--rm sniffer:latest
+```
 
 ## Build
 
