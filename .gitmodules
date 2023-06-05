@@ -7,13 +7,13 @@
 [submodule "fpga/lib/verilog-axi"]
 	path = fpga/lib/verilog-axi
 	url = https://github.com/alexforencich/verilog-axi
-[submodule "sw/sources/core"]
+[submodule "sw/sources/poky"]
 	path = sw/sources/poky
-	url = git@github.com:cyberchrime/poky.git
+	url = https://github.com/cyberchrime/poky
 	branch = honister
 [submodule "sw/sources/meta-openembedded"]
 	path = sw/sources/meta-openembedded
-	url = git@github.com:cyberchrime/meta-openembedded.git
+	url = https://github.com/cyberchrime/meta-openembedded.git
 	branch = honister
 [submodule "sw/sources/meta-xilinx-tools"]
 	path = sw/sources/meta-xilinx-tools
