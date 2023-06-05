@@ -34,6 +34,7 @@ VERILOG_SOURCES += ../../rtl/rgmii_rx.v
 VERILOG_SOURCES += ../../rtl/simple_fifo.v
 VERILOG_SOURCES += ../../rtl/word_cdc.v
 VERILOG_SOURCES += ../../rtl/pipeline.v
+VERILOG_SOURCES += ../../rtl/async_edge_detect.v
 VERILOG_SOURCES += ../../lib/verilog-ethernet/rtl/iddr.v
 VERILOG_SOURCES += ../../lib/verilog-ethernet/rtl/ssio_ddr_in.v
 VERILOG_SOURCES += ../../lib/verilog-ethernet/rtl/axis_gmii_rx.v
