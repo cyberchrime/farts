@@ -1,4 +1,32 @@
-# FaRTS is a Real Time Sniffer (FaRTS)
+# FARTS is A Real Time Sniffer (FaRTS)
+
+
+## About
+
+FARTS, a recursive acronym for *FARTS is A Real-Time Sniffer*, is a 
+Ethernet sniffer dedicated for real time (RT) applications like EtherCAT.
+It can simply be plugged in between two (RT) Ethernet devices
+to monitor all traffic transferred in between them, while introducing
+a very constant delay of only 1μs.
+
+On EtherCAT, it was successfully tested with a cycle time of 100μs.
+
+The used hardware is comprised by a Digilent/Avnet ZedBoard,
+which was extended by a Avnet AES-FMC-NETW1-G Network Expansion board.
+
+All software and gateware sources are publicly available and can
+be used by anyone under the GPLv3 license. Please also note the
+licenses of the subprojects.
+
+
+## Requirements
+
+- PC running a Linux based OS (other OSes are untested)
+- Podman or Docker
+- Vivado 2022.1 (newer versions may work, but are untested)
+- Digilent/Avnet ZedBoard 
+- Avnet AES-FMC-NETW1-G Network Expansion board
+
 
 ## Structure
 
@@ -8,48 +36,13 @@
 └── sw : Software
 ```
 
-## Possible Setup
 
-Two possibilities are provided to build the sniffer distribution:
-One approach running on a native Linux OS, the other one
-inside a Docker container.
+## Podman setup
 
-Note: There is an issue with Vivado running in Docker environments, requiring
-to preload a udev library. That means, when building the FPGA implementation,
-precede the command with `LD_PRELOAD=/lib/x86_64-linux-gnu/libudev.so.1`. See the 
-following link for more details:
-https://support.xilinx.com/s/question/0D54U00005Sgst2SAB/failed-batch-mode-execution-in-linux-docker-running-under-windows-host?language=en_US
+First, install Vivado from
+from https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
 
-Please note: Vivado 2022.1 is huge. The archive (~75GB) must be downloaded to your host.
-Afterwards, it is copied into the docker context (another 75GB), before it is unpacked
-in the docker context (estimated: another 75GB). The installation itself probably takes
-50GB, so installing Vivado in a docker container temporarily requires a total 
-disk space of 3*75+50 = 275GB.
-
-## Native OS toolchain
-
-Using a native Linux (tested: Ubuntu 20.04 LTS) host is the 
-recommended approach for building as it requires less disk space.
-
-1. Download and install Vivado 2022.1 from https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
-2. Setup Yocto as described in https://docs.yoctoproject.org/3.4.4/singleindex.html
-3. Source Xilinx' settings64.sh
-4. Start building with `make`
-
-## Docker toolchain
-
-Alternatively, you may use the toolchain with docker.
-Please not that a archive file of Vivado 2022.1 must be download
-prior to installation so that it can be installed in the
-docker image. Make sure to have at least 300 GB of free space
-on your disk (see the note above). Installation may take some
-time (2 hours), depending on your machine configuration.
-
-1. Download the Xilinx Unified Installer 2022.1 SFD 
-   from https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
-2. Place the downloaded tar.gz archive in the `docker` directory
-
-Then execute the following commands:
+Afterwards, execute the following commands:
 
 ```
 cd docker
@@ -59,8 +52,11 @@ docker start docker-Sniffing-Sniffer-1
 docker attach docker-Sniffing-Sniffer-1
 ```
 
+
+## Build
+
 Once you entered the shell inside the container,
-you can build it with make (without parallelisation). No need to use,
+you can build it with make (without parallelisation). No need to use
 `-j`, as all executed commands (Vivado and BitBake) already make heavy use
 of parallelisation. Execute
 
@@ -68,7 +64,6 @@ of parallelisation. Execute
 LD_PRELOAD=/lib/x86_64-linux-gnu/libudev.so.1 make
 
 ```
-
 
 If you'd like to use Vivado with a GUI, run `xhost +` on your host machine.
 
