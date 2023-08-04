@@ -40,8 +40,8 @@ licenses of the subprojects.
 ## Setup
 
 First, install Vivado from
-from https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
-This guide assumes it is installed to `/opt`.
+https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2022-1.html
+It is recommended to install it to `/opt`, as the Podman/Docker environment assumes it to be there.
 
 First, setup the repository:
 
@@ -61,7 +61,7 @@ When using docker, use these commands instead:
 
 ```
 docker build -t sniffer docker
-docker run -ti -v=/opt/Xilinx:/opt/Xilinx -v=${PWD}:/home/sniffer/ws--rm sniffer:latest
+docker run -ti -v=/opt/Xilinx:/opt/Xilinx -v=${PWD}:/home/sniffer/ws --rm sniffer:latest
 ```
 
 ## Build
