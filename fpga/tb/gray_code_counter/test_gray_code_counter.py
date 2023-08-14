@@ -26,7 +26,7 @@ import cocotb_test.simulator
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, ClockCycles
+from cocotb.triggers import RisingEdge, FallingEdge, ClockCycles
 from cocotb.regression import TestFactory
 
 class TB:
@@ -50,16 +50,39 @@ class TB:
         await RisingEdge(self.dut.clk)
 
 
+# From https://rosettacode.org/wiki/Gray_code#Python:_on_integers
+def gray_encode(n):
+    return n ^ n >> 1
+
+
+# From https://rosettacode.org/wiki/Gray_code#Python:_on_integers
+def gray_decode(n):
+    m = n >> 1
+    while m:
+        n ^= m
+        m >>= 1
+    return n
+
+
 async def run_test(dut):
 
     tb = TB(dut)
+    dut.enable.value = 0
 
     clk = Clock(dut.clk, 8, units="ns")  # Create a 8ns period clock on port clk
     cocotb.start_soon(clk.start())  # Start the clock
 
     await tb.reset()
 
-    await ClockCycles(dut.clk, 1000)
+    await FallingEdge(dut.clk)
+    dut.enable.value = 1
+
+    for _ in range(3):
+        for i in range(124993):
+            assert gray_encode(i) == dut.cnt.value
+            await FallingEdge(dut.clk)
+
+    await ClockCycles(dut.clk, 10)
 
 
 if cocotb.SIM_NAME:
