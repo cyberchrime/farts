@@ -30,9 +30,6 @@ with aRTS. If not, see <https://www.gnu.org/licenses/>.
  */
 module fpga #
 (
-    // Clock period
-    parameter CLOCK_PERIOD = 5,
-
     // AXI lite interface configuration (control)
     parameter AXIL_DMA_DATA_WIDTH = 32,
     parameter AXIL_DMA_ADDR_WIDTH = 4,
@@ -370,7 +367,6 @@ fpga_core # (
     .IODDR_STYLE("IODDR"),
     .CLOCK_INPUT_STYLE("BUFR"),
     .USE_CLK90("TRUE"),
-    .CLOCK_PERIOD(CLOCK_PERIOD),
     .AXIL_DMA_DATA_WIDTH(AXIL_DMA_DATA_WIDTH),
     .AXIL_DMA_ADDR_WIDTH(AXIL_DMA_ADDR_WIDTH),
     .AXIL_DMA_DESC_DATA_WIDTH(AXIL_DMA_DESC_DATA_WIDTH),

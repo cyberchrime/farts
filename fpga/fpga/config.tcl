@@ -43,11 +43,6 @@ set m_axil_mdio [get_bd_intf_ports m_axil_mdio]
 dict set params AXIL_MDIO_DATA_WIDTH [get_property CONFIG.DATA_WIDTH $m_axil_mdio]
 dict set params AXIL_MDIO_ADDR_WIDTH 8
 
-set fclk_clk1 [get_bd_ports fclk_clk1]
-set freq [get_property CONFIG.FREQ_HZ $fclk_clk1]
-set period [expr 1000000000/$freq]
-dict set params CLOCK_PERIOD $period
-
 # apply parameters to top-level
 set param_list {}
 dict for {name value} $params {

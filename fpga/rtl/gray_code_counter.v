@@ -38,7 +38,6 @@ module gray_code_counter #
     input  wire rst,
     input  wire enable,
 
-    output wire carry,
     output wire [WIDTH-1:0] cnt
 );
 
@@ -88,11 +87,7 @@ always @(posedge clk) begin
         gray_cnt_reg[WIDTH:1] <= {WIDTH{1'b0}};
         gray_cnt_reg[0] <= 1'b1;
     end else begin
-        if (enable) begin
-            gray_cnt_reg <= gray_cnt_next;
-        end else begin
-            gray_cnt_reg <= gray_cnt_reg;
-        end
+        gray_cnt_reg <= gray_cnt_next;
     end
 end
 

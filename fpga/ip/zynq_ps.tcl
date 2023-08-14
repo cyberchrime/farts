@@ -1,29 +1,293 @@
-# Copyright (c) 2023 Chris H. Meyer
+
+################################################################
+# This is a generated script based on design: zynq_ps
 #
-# This file is part of aRTS.
-#
-# aRTS is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# aRTS is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with aRTS. If not, see <https://www.gnu.org/licenses/>.
+# Though there are limitations about the generated script,
+# the main purpose of this utility is to make learning
+# IP Integrator Tcl commands easier.
+################################################################
+
+namespace eval _tcl {
+proc get_script_folder {} {
+   set script_path [file normalize [info script]]
+   set script_folder [file dirname $script_path]
+   return $script_folder
+}
+}
+variable script_folder
+set script_folder [_tcl::get_script_folder]
+
+################################################################
+# Check if script is running in correct Vivado version.
+################################################################
+set scripts_vivado_version 2022.1
+set current_vivado_version [version -short]
+
+if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
+   puts ""
+   catch {common::send_gid_msg -ssname BD::TCL -id 2041 -severity "ERROR" "This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Please run the script in Vivado <$scripts_vivado_version> then open the design in Vivado <$current_vivado_version>. Upgrade the design by running \"Tools => Report => Report IP Status...\", then run write_bd_tcl to create an updated script."}
+
+   return 1
+}
+
+################################################################
+# START
+################################################################
+
+# To test this script, run the following commands from Vivado Tcl console:
+# source zynq_ps_script.tcl
+
+# If there is no project opened, this script will create a
+# project, but make sure you do not have an existing project
+# <./myproj/project_1.xpr> in the current working folder.
+
+set list_projs [get_projects -quiet]
+if { $list_projs eq "" } {
+   create_project project_1 myproj -part xc7z020clg484-1
+}
 
 
-# create block design
-create_bd_design "zynq_ps"
+# CHANGE DESIGN NAME HERE
+variable design_name
+set design_name zynq_ps
 
-# Create blocks
+# If you do not already have an existing IP Integrator design open,
+# you can create a design using the following command:
+#    create_bd_design $design_name
 
-# Zynq PS
-set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
-set_property -dict [ list \
+# Creating design if needed
+set errMsg ""
+set nRet 0
+
+set cur_design [current_bd_design -quiet]
+set list_cells [get_bd_cells -quiet]
+
+if { ${design_name} eq "" } {
+   # USE CASES:
+   #    1) Design_name not set
+
+   set errMsg "Please set the variable <design_name> to a non-empty value."
+   set nRet 1
+
+} elseif { ${cur_design} ne "" && ${list_cells} eq "" } {
+   # USE CASES:
+   #    2): Current design opened AND is empty AND names same.
+   #    3): Current design opened AND is empty AND names diff; design_name NOT in project.
+   #    4): Current design opened AND is empty AND names diff; design_name exists in project.
+
+   if { $cur_design ne $design_name } {
+      common::send_gid_msg -ssname BD::TCL -id 2001 -severity "INFO" "Changing value of <design_name> from <$design_name> to <$cur_design> since current design is empty."
+      set design_name [get_property NAME $cur_design]
+   }
+   common::send_gid_msg -ssname BD::TCL -id 2002 -severity "INFO" "Constructing design in IPI design <$cur_design>..."
+
+} elseif { ${cur_design} ne "" && $list_cells ne "" && $cur_design eq $design_name } {
+   # USE CASES:
+   #    5) Current design opened AND has components AND same names.
+
+   set errMsg "Design <$design_name> already exists in your project, please set the variable <design_name> to another value."
+   set nRet 1
+} elseif { [get_files -quiet ${design_name}.bd] ne "" } {
+   # USE CASES: 
+   #    6) Current opened design, has components, but diff names, design_name exists in project.
+   #    7) No opened design, design_name exists in project.
+
+   set errMsg "Design <$design_name> already exists in your project, please set the variable <design_name> to another value."
+   set nRet 2
+
+} else {
+   # USE CASES:
+   #    8) No opened design, design_name not in project.
+   #    9) Current opened design, has components, but diff names, design_name not in project.
+
+   common::send_gid_msg -ssname BD::TCL -id 2003 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
+
+   create_bd_design $design_name
+
+   common::send_gid_msg -ssname BD::TCL -id 2004 -severity "INFO" "Making design <$design_name> as current_bd_design."
+   current_bd_design $design_name
+
+}
+
+common::send_gid_msg -ssname BD::TCL -id 2005 -severity "INFO" "Currently the variable <design_name> is equal to \"$design_name\"."
+
+if { $nRet != 0 } {
+   catch {common::send_gid_msg -ssname BD::TCL -id 2006 -severity "ERROR" $errMsg}
+   return $nRet
+}
+
+set bCheckIPsPassed 1
+##################################################################
+# CHECK IPs
+##################################################################
+set bCheckIPs 1
+if { $bCheckIPs == 1 } {
+   set list_check_ips "\ 
+xilinx.com:ip:proc_sys_reset:5.0\
+xilinx.com:ip:processing_system7:5.5\
+"
+
+   set list_ips_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
+
+   foreach ip_vlnv $list_check_ips {
+      set ip_obj [get_ipdefs -all $ip_vlnv]
+      if { $ip_obj eq "" } {
+         lappend list_ips_missing $ip_vlnv
+      }
+   }
+
+   if { $list_ips_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
+      set bCheckIPsPassed 0
+   }
+
+}
+
+if { $bCheckIPsPassed != 1 } {
+  common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
+  return 3
+}
+
+##################################################################
+# DESIGN PROCs
+##################################################################
+
+
+
+# Procedure to create entire design; Provide argument to make
+# procedure reusable. If parentCell is "", will use root.
+proc create_root_design { parentCell } {
+
+  variable script_folder
+  variable design_name
+
+  if { $parentCell eq "" } {
+     set parentCell [get_bd_cells /]
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+
+  # Create interface ports
+  set DDR [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 DDR ]
+
+  set FIXED_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
+
+  set m_axil_dma [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 m_axil_dma ]
+  set_property -dict [ list \
+   CONFIG.ADDR_WIDTH {32} \
+   CONFIG.DATA_WIDTH {32} \
+   CONFIG.NUM_READ_OUTSTANDING {2} \
+   CONFIG.NUM_WRITE_OUTSTANDING {2} \
+   CONFIG.PROTOCOL {AXI4LITE} \
+   ] $m_axil_dma
+
+  set m_axil_dma_desc [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 m_axil_dma_desc ]
+  set_property -dict [ list \
+   CONFIG.ADDR_WIDTH {32} \
+   CONFIG.DATA_WIDTH {32} \
+   CONFIG.NUM_READ_OUTSTANDING {2} \
+   CONFIG.NUM_WRITE_OUTSTANDING {2} \
+   CONFIG.PROTOCOL {AXI4LITE} \
+   ] $m_axil_dma_desc
+
+  set m_axil_mac [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 m_axil_mac ]
+  set_property -dict [ list \
+   CONFIG.ADDR_WIDTH {32} \
+   CONFIG.DATA_WIDTH {32} \
+   CONFIG.NUM_READ_OUTSTANDING {2} \
+   CONFIG.NUM_WRITE_OUTSTANDING {2} \
+   CONFIG.PROTOCOL {AXI4LITE} \
+   ] $m_axil_mac
+
+  set m_axil_mdio [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 m_axil_mdio ]
+  set_property -dict [ list \
+   CONFIG.ADDR_WIDTH {32} \
+   CONFIG.DATA_WIDTH {32} \
+   CONFIG.NUM_READ_OUTSTANDING {2} \
+   CONFIG.NUM_WRITE_OUTSTANDING {2} \
+   CONFIG.PROTOCOL {AXI4LITE} \
+   ] $m_axil_mdio
+
+  set s_axi_dma [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 s_axi_dma ]
+  set_property -dict [ list \
+   CONFIG.ADDR_WIDTH {32} \
+   CONFIG.ARUSER_WIDTH {0} \
+   CONFIG.AWUSER_WIDTH {0} \
+   CONFIG.BUSER_WIDTH {0} \
+   CONFIG.DATA_WIDTH {64} \
+   CONFIG.HAS_BRESP {1} \
+   CONFIG.HAS_BURST {1} \
+   CONFIG.HAS_CACHE {1} \
+   CONFIG.HAS_LOCK {1} \
+   CONFIG.HAS_PROT {1} \
+   CONFIG.HAS_QOS {1} \
+   CONFIG.HAS_REGION {0} \
+   CONFIG.HAS_RRESP {1} \
+   CONFIG.HAS_WSTRB {1} \
+   CONFIG.ID_WIDTH {6} \
+   CONFIG.MAX_BURST_LENGTH {16} \
+   CONFIG.NUM_READ_OUTSTANDING {8} \
+   CONFIG.NUM_READ_THREADS {1} \
+   CONFIG.NUM_WRITE_OUTSTANDING {8} \
+   CONFIG.NUM_WRITE_THREADS {1} \
+   CONFIG.PROTOCOL {AXI3} \
+   CONFIG.READ_WRITE_MODE {READ_WRITE} \
+   CONFIG.RUSER_BITS_PER_BYTE {0} \
+   CONFIG.RUSER_WIDTH {0} \
+   CONFIG.SUPPORTS_NARROW_BURST {1} \
+   CONFIG.WUSER_BITS_PER_BYTE {0} \
+   CONFIG.WUSER_WIDTH {0} \
+   ] $s_axi_dma
+
+
+  # Create ports
+  set dma_irq [ create_bd_port -dir I -type intr dma_irq ]
+  set_property -dict [ list \
+   CONFIG.PortWidth {1} \
+ ] $dma_irq
+  set fclk_clk0 [ create_bd_port -dir O -type clk fclk_clk0 ]
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {s_axi_dma:m_axil_dma:m_axil_dma_desc:m_axil_mac:m_axil_mdio} \
+ ] $fclk_clk0
+  set fclk_clk1 [ create_bd_port -dir O -type clk fclk_clk1 ]
+  set fclk_reset0 [ create_bd_port -dir O -from 0 -to 0 -type rst fclk_reset0 ]
+  set fclk_reset1 [ create_bd_port -dir O -from 0 -to 0 -type rst fclk_reset1 ]
+
+  # Create instance: axi_interconnect, and set properties
+  set axi_interconnect [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_interconnect ]
+  set_property -dict [ list \
+   CONFIG.NUM_MI {4} \
+ ] $axi_interconnect
+
+  # Create instance: proc_sys_reset0, and set properties
+  set proc_sys_reset0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset0 ]
+
+  # Create instance: proc_sys_reset1, and set properties
+  set proc_sys_reset1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset1 ]
+
+  # Create instance: processing_system7_0, and set properties
+  set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
+  set_property -dict [ list \
    CONFIG.PCW_ACT_APU_PERIPHERAL_FREQMHZ {666.666687} \
    CONFIG.PCW_ACT_CAN0_PERIPHERAL_FREQMHZ {23.8095} \
    CONFIG.PCW_ACT_CAN1_PERIPHERAL_FREQMHZ {23.8095} \
@@ -32,8 +296,8 @@ set_property -dict [ list \
    CONFIG.PCW_ACT_ENET0_PERIPHERAL_FREQMHZ {125.000000} \
    CONFIG.PCW_ACT_ENET1_PERIPHERAL_FREQMHZ {10.000000} \
    CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ {142.857132} \
-   CONFIG.PCW_ACT_FPGA1_PERIPHERAL_FREQMHZ {200.000000} \
-   CONFIG.PCW_ACT_FPGA2_PERIPHERAL_FREQMHZ {125.000000} \
+   CONFIG.PCW_ACT_FPGA1_PERIPHERAL_FREQMHZ {125.000000} \
+   CONFIG.PCW_ACT_FPGA2_PERIPHERAL_FREQMHZ {10.000000} \
    CONFIG.PCW_ACT_FPGA3_PERIPHERAL_FREQMHZ {10.000000} \
    CONFIG.PCW_ACT_I2C_PERIPHERAL_FREQMHZ {50} \
    CONFIG.PCW_ACT_PCAP_PERIPHERAL_FREQMHZ {200.000000} \
@@ -74,8 +338,8 @@ set_property -dict [ list \
    CONFIG.PCW_CAN_PERIPHERAL_FREQMHZ {100} \
    CONFIG.PCW_CAN_PERIPHERAL_VALID {0} \
    CONFIG.PCW_CLK0_FREQ {142857132} \
-   CONFIG.PCW_CLK1_FREQ {200000000} \
-   CONFIG.PCW_CLK2_FREQ {125000000} \
+   CONFIG.PCW_CLK1_FREQ {125000000} \
+   CONFIG.PCW_CLK2_FREQ {10000000} \
    CONFIG.PCW_CLK3_FREQ {10000000} \
    CONFIG.PCW_CORE0_FIQ_INTR {0} \
    CONFIG.PCW_CORE0_IRQ_INTR {0} \
@@ -134,7 +398,7 @@ set_property -dict [ list \
    CONFIG.PCW_EN_CAN1 {0} \
    CONFIG.PCW_EN_CLK0_PORT {1} \
    CONFIG.PCW_EN_CLK1_PORT {1} \
-   CONFIG.PCW_EN_CLK2_PORT {1} \
+   CONFIG.PCW_EN_CLK2_PORT {0} \
    CONFIG.PCW_EN_CLK3_PORT {0} \
    CONFIG.PCW_EN_CLKTRIG0_PORT {0} \
    CONFIG.PCW_EN_CLKTRIG1_PORT {0} \
@@ -198,11 +462,11 @@ set_property -dict [ list \
    CONFIG.PCW_FCLK0_PERIPHERAL_DIVISOR0 {7} \
    CONFIG.PCW_FCLK0_PERIPHERAL_DIVISOR1 {1} \
    CONFIG.PCW_FCLK1_PERIPHERAL_CLKSRC {IO PLL} \
-   CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR0 {5} \
-   CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR1 {1} \
+   CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR0 {4} \
+   CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR1 {2} \
    CONFIG.PCW_FCLK2_PERIPHERAL_CLKSRC {IO PLL} \
-   CONFIG.PCW_FCLK2_PERIPHERAL_DIVISOR0 {4} \
-   CONFIG.PCW_FCLK2_PERIPHERAL_DIVISOR1 {2} \
+   CONFIG.PCW_FCLK2_PERIPHERAL_DIVISOR0 {1} \
+   CONFIG.PCW_FCLK2_PERIPHERAL_DIVISOR1 {1} \
    CONFIG.PCW_FCLK3_PERIPHERAL_CLKSRC {IO PLL} \
    CONFIG.PCW_FCLK3_PERIPHERAL_DIVISOR0 {1} \
    CONFIG.PCW_FCLK3_PERIPHERAL_DIVISOR1 {1} \
@@ -210,8 +474,8 @@ set_property -dict [ list \
    CONFIG.PCW_FCLK_CLK1_BUF {TRUE} \
    CONFIG.PCW_FCLK_CLK2_BUF {FALSE} \
    CONFIG.PCW_FCLK_CLK3_BUF {FALSE} \
-   CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {166.666672} \
-   CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {200} \
+   CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {142.857132} \
+   CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {125} \
    CONFIG.PCW_FPGA2_PERIPHERAL_FREQMHZ {125} \
    CONFIG.PCW_FPGA3_PERIPHERAL_FREQMHZ {50} \
    CONFIG.PCW_FPGA_FCLK0_ENABLE {1} \
@@ -831,143 +1095,48 @@ gpio[0]#qspi0_ss_b#qspi0_io[0]#qspi0_io[1]#qspi0_io[2]#qspi0_io[3]/HOLD_B#qspi0_
    CONFIG.PCW_WDT_PERIPHERAL_DIVISOR0 {1} \
    CONFIG.PCW_WDT_PERIPHERAL_ENABLE {0} \
    CONFIG.PCW_WDT_PERIPHERAL_FREQMHZ {133.333333} \
-] $processing_system7_0
+ ] $processing_system7_0
 
-set ddr [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 DDR ]
+  # Create interface connections
+  connect_bd_intf_net -intf_net S_AXI_HP0_0_1 [get_bd_intf_ports s_axi_dma] [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
+  connect_bd_intf_net -intf_net axi_interconnect_M00_AXI [get_bd_intf_ports m_axil_dma] [get_bd_intf_pins axi_interconnect/M00_AXI]
+  connect_bd_intf_net -intf_net axi_interconnect_M01_AXI [get_bd_intf_ports m_axil_mac] [get_bd_intf_pins axi_interconnect/M01_AXI]
+  connect_bd_intf_net -intf_net axi_interconnect_M02_AXI [get_bd_intf_ports m_axil_mdio] [get_bd_intf_pins axi_interconnect/M02_AXI]
+  connect_bd_intf_net -intf_net axi_interconnect_M03_AXI [get_bd_intf_ports m_axil_dma_desc] [get_bd_intf_pins axi_interconnect/M03_AXI]
+  connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
+  connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
+  connect_bd_intf_net -intf_net processing_system7_0_M_AXI_GP0 [get_bd_intf_pins axi_interconnect/S00_AXI] [get_bd_intf_pins processing_system7_0/M_AXI_GP0]
 
-set fixed_io [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
+  # Create port connections
+  connect_bd_net -net dma_irq_1 [get_bd_ports dma_irq] [get_bd_pins processing_system7_0/IRQ_F2P]
+  connect_bd_net -net proc_sys_reset0_interconnect_aresetn [get_bd_pins axi_interconnect/ARESETN] [get_bd_pins axi_interconnect/M00_ARESETN] [get_bd_pins axi_interconnect/M01_ARESETN] [get_bd_pins axi_interconnect/M02_ARESETN] [get_bd_pins axi_interconnect/M03_ARESETN] [get_bd_pins axi_interconnect/S00_ARESETN] [get_bd_pins proc_sys_reset0/interconnect_aresetn]
+  connect_bd_net -net proc_sys_reset0_peripheral_reset [get_bd_ports fclk_reset0] [get_bd_pins proc_sys_reset0/peripheral_reset]
+  connect_bd_net -net proc_sys_reset1_peripheral_reset [get_bd_ports fclk_reset1] [get_bd_pins proc_sys_reset1/peripheral_reset]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_ports fclk_clk0] [get_bd_pins axi_interconnect/ACLK] [get_bd_pins axi_interconnect/M00_ACLK] [get_bd_pins axi_interconnect/M01_ACLK] [get_bd_pins axi_interconnect/M02_ACLK] [get_bd_pins axi_interconnect/M03_ACLK] [get_bd_pins axi_interconnect/S00_ACLK] [get_bd_pins proc_sys_reset0/slowest_sync_clk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]
+  connect_bd_net -net processing_system7_0_FCLK_CLK1 [get_bd_ports fclk_clk1] [get_bd_pins proc_sys_reset1/slowest_sync_clk] [get_bd_pins processing_system7_0/FCLK_CLK1]
+  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins proc_sys_reset0/ext_reset_in] [get_bd_pins proc_sys_reset1/ext_reset_in] [get_bd_pins processing_system7_0/FCLK_RESET0_N]
 
-# AXI interconnects
-set axi_interconnect [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect axi_interconnect ]
-set_property -dict [ list CONFIG.NUM_MI {4} ] $axi_interconnect
-
-
-# reset
-set proc_sys_reset0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset proc_sys_reset0 ]
-set proc_sys_reset1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset proc_sys_reset1 ]
-
-# Clock
-set fclk_clk0 [get_bd_pins $processing_system7_0/FCLK_CLK0]
-set fclk_clk1 [get_bd_pins $processing_system7_0/FCLK_CLK1]
-make_bd_pins_external $fclk_clk0
-make_bd_pins_external $fclk_clk1
-set_property name fclk_clk0 [get_bd_ports -of_objects [get_bd_nets -of_objects $fclk_clk0]]
-set_property name fclk_clk1 [get_bd_ports -of_objects [get_bd_nets -of_objects $fclk_clk1]]
-set pl_clk0_port [get_bd_ports -of_objects [get_bd_nets -of_objects $fclk_clk0]]
-set pl_clk1_port [get_bd_ports -of_objects [get_bd_nets -of_objects $fclk_clk1]]
-
-connect_bd_net $fclk_clk0 [get_bd_pins $processing_system7_0/M_AXI_GP0_ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $processing_system7_0/S_AXI_HP0_ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $proc_sys_reset0/slowest_sync_clk]
-connect_bd_net $fclk_clk1 [get_bd_pins $proc_sys_reset1/slowest_sync_clk]
-connect_bd_net $fclk_clk0 [get_bd_pins $axi_interconnect/ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $axi_interconnect/S00_ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $axi_interconnect/M00_ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $axi_interconnect/M01_ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $axi_interconnect/M02_ACLK]
-connect_bd_net $fclk_clk0 [get_bd_pins $axi_interconnect/M03_ACLK]
-
-set fclk_clk0_busif [list]
+  # Create address segments
+  assign_bd_address -offset 0x40000000 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs m_axil_dma/Reg] -force
+  assign_bd_address -offset 0x40001000 -range 0x00001000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs m_axil_dma_desc/Reg] -force
+  assign_bd_address -offset 0x40000100 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs m_axil_mac/Reg] -force
+  assign_bd_address -offset 0x40000200 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs m_axil_mdio/Reg] -force
+  assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces s_axi_dma] [get_bd_addr_segs processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM] -force
 
 
-# Reset
-set fclk_reset0_n [get_bd_pins $processing_system7_0/FCLK_RESET0_N]
-connect_bd_net $fclk_reset0_n [get_bd_pins $proc_sys_reset0/ext_reset_in]
-connect_bd_net $fclk_reset0_n [get_bd_pins $proc_sys_reset1/ext_reset_in]
+  # Restore current instance
+  current_bd_instance $oldCurInst
 
-set fclk_reset0 [get_bd_pins $proc_sys_reset0/peripheral_reset]
-set fclk_reset1 [get_bd_pins $proc_sys_reset1/peripheral_reset]
-make_bd_pins_external $fclk_reset0
-make_bd_pins_external $fclk_reset1
-set_property name fclk_reset0 [get_bd_ports -of_objects [get_bd_nets -of_objects $fclk_reset0]]
-set_property name fclk_reset1 [get_bd_ports -of_objects [get_bd_nets -of_objects $fclk_reset1]]
-
-set interconnect_aresetn [get_bd_pins $proc_sys_reset0/interconnect_aresetn]
-connect_bd_net $interconnect_aresetn [get_bd_pins $axi_interconnect/ARESETN]
-connect_bd_net $interconnect_aresetn [get_bd_pins $axi_interconnect/S00_ARESETN]
-connect_bd_net $interconnect_aresetn [get_bd_pins $axi_interconnect/M00_ARESETN]
-connect_bd_net $interconnect_aresetn [get_bd_pins $axi_interconnect/M01_ARESETN]
-connect_bd_net $interconnect_aresetn [get_bd_pins $axi_interconnect/M02_ARESETN]
-connect_bd_net $interconnect_aresetn [get_bd_pins $axi_interconnect/M03_ARESETN]
-
-# Interrupt
-set dma_irq [ create_bd_port -dir I -type intr dma_irq ]
-set_property -dict [ list \
-    CONFIG.PortWidth {1} \
-] $dma_irq
-connect_bd_net -net dma_irq_1 [get_bd_ports dma_irq] [get_bd_pins processing_system7_0/IRQ_F2P]
-
-# FIXED IOs
-connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
-connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
-
-# MMIO
-connect_bd_intf_net [get_bd_intf_pins $processing_system7_0/M_AXI_GP0] [get_bd_intf_pins $axi_interconnect/S00_AXI]
-
-set s_axi_dma_pin [get_bd_intf_pins $processing_system7_0/S_AXI_HP0]
-make_bd_intf_pins_external $s_axi_dma_pin
-set_property name s_axi_dma [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $s_axi_dma_pin]]
-set s_axi_dma_port [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $s_axi_dma_pin]]
-lappend fclk_clk0_busif $s_axi_dma_port
-
-# AXI (Lite) ports
-set m_axil_dma_pin [get_bd_intf_pins $axi_interconnect/M00_AXI]
-make_bd_intf_pins_external $m_axil_dma_pin
-set_property name m_axil_dma [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_dma_pin]]
-set m_axil_dma_port [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_dma_pin]]
-lappend fclk_clk0_busif $m_axil_dma_port
-
-set m_axil_dma_desc_pin [get_bd_intf_pins $axi_interconnect/M03_AXI]
-make_bd_intf_pins_external $m_axil_dma_desc_pin
-set_property name m_axil_dma_desc [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_dma_desc_pin]]
-set m_axil_dma_desc_port [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_dma_desc_pin]]
-lappend fclk_clk0_busif $m_axil_dma_desc_port
-
-
-set m_axil_mac_pin [get_bd_intf_pins $axi_interconnect/M01_AXI]
-make_bd_intf_pins_external $m_axil_mac_pin
-set_property name m_axil_mac [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_mac_pin]]
-set m_axil_mac_port [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_mac_pin]]
-lappend fclk_clk0_busif $m_axil_mac_port
-
-set m_axil_mdio_pin [get_bd_intf_pins $axi_interconnect/M02_AXI]
-make_bd_intf_pins_external $m_axil_mdio_pin
-set_property name m_axil_mdio [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_mdio_pin]]
-set m_axil_mdio_port [get_bd_intf_ports -of_objects [get_bd_intf_nets -of_objects $m_axil_mdio_pin]]
-lappend fclk_clk0_busif $m_axil_mdio_port
-
-# Port clock associations
-set lst [list]
-foreach port $fclk_clk0_busif {
-    lappend lst [get_property name $port]
+  validate_bd_design
+  save_bd_design
 }
-set_property CONFIG.ASSOCIATED_BUSIF [join $lst ":"] $pl_clk0_port
+# End of create_root_design()
 
-## Assign addresses
-assign_bd_address -target_address_space /processing_system7_0/Data [get_bd_addr_segs m_axil_dma/Reg] -force
-assign_bd_address -target_address_space /processing_system7_0/Data [get_bd_addr_segs m_axil_dma_desc/Reg] -force
-assign_bd_address -target_address_space /processing_system7_0/Data [get_bd_addr_segs m_axil_mac/Reg] -force
-assign_bd_address -target_address_space /processing_system7_0/Data [get_bd_addr_segs m_axil_mdio/Reg] -force
-assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces s_axi_dma] [get_bd_addr_segs processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM] -force
 
-set_property -dict [list CONFIG.PROTOCOL {AXI4LITE}] [get_bd_intf_ports m_axil_dma]
-set_property range 256 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_dma_Reg}]
-set_property offset 0x40000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_dma_Reg}]
+##################################################################
+# MAIN FLOW
+##################################################################
 
-set_property -dict [list CONFIG.PROTOCOL {AXI4LITE}] [get_bd_intf_ports m_axil_mac]
-set_property range 256 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_mac_Reg}]
-set_property offset 0x40000100 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_mac_Reg}]
+create_root_design ""
 
-set_property -dict [list CONFIG.PROTOCOL {AXI4LITE}] [get_bd_intf_ports m_axil_mdio]
-set_property range 256 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_mdio_Reg}]
-set_property offset 0x40000200 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_mdio_Reg}]
 
-set_property -dict [list CONFIG.PROTOCOL {AXI4LITE}] [get_bd_intf_ports m_axil_dma_desc]
-set_property range 4K [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_dma_desc_Reg}]
-set_property offset 0x40001000 [get_bd_addr_segs {processing_system7_0/Data/SEG_m_axil_dma_desc_Reg}]
-
-validate_bd_design
-
-# Save block design
-save_bd_design [current_bd_design]
-close_bd_design [current_bd_design]

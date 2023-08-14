@@ -26,44 +26,35 @@ with aRTS. If not, see <https://www.gnu.org/licenses/>.
 `default_nettype none
 
 /*
- * PCAP Gray Code Timestamp generator with 8ns precision; 
- * two values:
- * - nanoseconds
- * - and a second
+ * Gray-code to binary converter
  */
-module pcap_clock
+module gray2bin #
 (
-    input  wire        clk,
-    input  wire        rst,
+    parameter WIDTH = 32
+)
+(
+    input  wire             clk,
+    input  wire             rst,
 
-    output wire [31:0] nsec,
-    output wire [31:0] sec
+    input  wire [WIDTH-1:0] gray,
+    output wire [WIDTH-1:0] bin
 );
 
+reg [WIDTH-1:0] bin_reg = {WIDTH{1'b0}};
 
-localparam RESET_VALUE = 32'b00000000000000010001110001100000;
+assign bin = bin_reg;
 
-gray_code_counter # (
-    .WIDTH(32),
-    .RESET_VALUE(RESET_VALUE)
-) gray_nsec_inst (
-    .clk(clk),
-    .rst(rst),
-    .enable(1'b1),
-    .cnt(nsec)
-);
+integer i;
 
-wire sec_en = nsec == RESET_VALUE;
-
-gray_code_counter # (
-    .WIDTH(32),
-    .RESET_VALUE(32'h80000000) 
-) pcap_clk_inst (
-    .clk(clk),
-    .rst(rst),
-    .enable(sec_en),
-    .cnt(sec)
-);
+always @(posedge clk) begin
+    if (rst) begin
+        bin_reg = {WIDTH{1'b0}};
+    end else begin
+        for (i = 0; i < WIDTH; i = i + 1) begin
+            bin_reg[i] = ^(gray >> i);
+        end
+    end
+end
 
 endmodule
 

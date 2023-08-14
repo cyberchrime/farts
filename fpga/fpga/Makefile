@@ -36,6 +36,7 @@ SYN_FILES += rtl/fpga_core.v
 SYN_FILES += rtl/rgmii_pcap.v
 SYN_FILES += rtl/axis_prepend.v
 SYN_FILES += rtl/pcap_clock.v
+SYN_FILES += rtl/gray_code_counter.v
 SYN_FILES += rtl/rgmii_rx.v
 SYN_FILES += rtl/rgmii_pcap.v
 SYN_FILES += rtl/word_cdc.v

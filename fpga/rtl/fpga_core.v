@@ -29,9 +29,6 @@ with aRTS. If not, see <https://www.gnu.org/licenses/>.
  */
 module fpga_core #
 (
-    // Clock period
-    parameter CLOCK_PERIOD = 4,
-
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
     parameter TARGET = "GENERIC",
     // IODDR style ("IODDR", "IODDR2")
@@ -257,19 +254,18 @@ wire [AXI_STRB_WIDTH-1:0] axis_tkeep, axis1_tkeep, axis2_tkeep;
 wire [AXIS_USER_WIDTH-1:0] axis_tuser, axis1_tuser, axis2_tuser;
 wire axis_tready, axis1_tready, axis2_tready;
 
-wire [31:0] ts_nsec;
-wire [31:0] ts_sec;
+wire [31:0] ts_nsec_gray;
+wire [31:0] ts_sec_gray;
 
 wire ctrl_mac_enable;
 wire ctrl_mii_select;
 
-pcap_clock # (
-    .CLOCK_PERIOD(CLOCK_PERIOD)
-) pcap_clk_inst (
+pcap_clock
+pcap_clk_inst (
     .clk(counter_clk),
     .rst(counter_rst),
-    .nsec(ts_nsec),
-    .sec(ts_sec)
+    .nsec(ts_nsec_gray),
+    .sec(ts_sec_gray)
 );
 
 wire status_busy1, status_busy2;
@@ -289,7 +285,6 @@ rgmii_pcap #
     .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
     .TARGET(TARGET),
     .IODDR_STYLE(IODDR_STYLE),
-    .CLOCK_PERIOD(CLOCK_PERIOD),
     .CLOCK_INPUT_STYLE(CLOCK_INPUT_STYLE)
 )
 rgmii1_pcap_inst (
@@ -317,8 +312,8 @@ rgmii1_pcap_inst (
     .bad_frame(mac1_bad_frame),
     .bad_fcs(mac1_bad_fcs),
 
-    .ts_sec(ts_sec),
-    .ts_nsec(ts_nsec),
+    .ts_sec_gray(ts_sec_gray),
+    .ts_nsec_gray(ts_nsec_gray),
 
     .busy(status_busy1),
 
@@ -334,7 +329,6 @@ rgmii_pcap #
     .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
     .TARGET(TARGET),
     .IODDR_STYLE(IODDR_STYLE),
-    .CLOCK_PERIOD(CLOCK_PERIOD),
     .CLOCK_INPUT_STYLE(CLOCK_INPUT_STYLE)
 )
 rgmii2_pcap_inst (
@@ -362,8 +356,8 @@ rgmii2_pcap_inst (
     .bad_frame(mac2_bad_frame),
     .bad_fcs(mac2_bad_fcs),
 
-    .ts_sec(ts_sec),
-    .ts_nsec(ts_nsec),
+    .ts_sec_gray(ts_sec_gray),
+    .ts_nsec_gray(ts_nsec_gray),
 
     .busy(status_busy2),
 

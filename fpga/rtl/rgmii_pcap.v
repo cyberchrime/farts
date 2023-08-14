@@ -42,8 +42,6 @@ module rgmii_pcap #
     parameter KEEP_WIDTH = ((AXI_DATA_WIDTH+7)/8),
     // width of frame length counter
     parameter FRAME_LEN_WIDTH = 16,
-    // Clock period
-    parameter CLOCK_PERIOD = 4,
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
     parameter TARGET = "GENERIC",
     // IODDR style ("IODDR", "IODDR2")
@@ -85,8 +83,8 @@ module rgmii_pcap #
     output wire                       bad_frame,
     output wire                       bad_fcs,
 
-    input  wire [31:0]                ts_sec,
-    input  wire [31:0]                ts_nsec,
+    input  wire [31:0]                ts_sec_gray,
+    input  wire [31:0]                ts_nsec_gray,
 
     output wire                       busy,
 
@@ -235,6 +233,8 @@ rx_data_fifo (
     .m_status_good_frame(fifo_good_frame)
 );
 
+wire [31:0] ts_nsec_gray_rx;
+wire [31:0] ts_sec_gray_rx;
 wire [31:0] ts_nsec_rx;
 wire [31:0] ts_sec_rx;
 
@@ -249,8 +249,30 @@ timestamp_cdc (
     .output_clk(rx_clk),
     .rst(1'b0), // no reset required because it takes some cycles till SFD arrives
 
-    .input_data({ts_nsec, ts_sec}),
-    .output_data({ts_nsec_rx, ts_sec_rx})
+    .input_data({ts_nsec_gray, ts_sec_gray}),
+    .output_data({ts_nsec_gray_rx, ts_sec_gray_rx})
+);
+
+gray2bin # (
+    .WIDTH(32)
+)
+gray2bin_nsec (
+    .clk(rx_clk),
+    .rst(rx_rst),
+
+    .gray(ts_nsec_gray_rx),
+    .bin(ts_nsec_rx)
+);
+
+gray2bin # (
+    .WIDTH(32)
+)
+gray2bin_sec (
+    .clk(rx_clk),
+    .rst(rx_rst),
+
+    .gray(ts_sec_gray_rx),
+    .bin(ts_sec_rx)
 );
 
 // delay start_frame signal as this is the amount of time required for
@@ -300,7 +322,7 @@ timestamp_fifo (
     .rst(rx_rst),
 
     // AXI input
-    .s_axis_tdata({ts_nsec_rx, ts_sec_rx}),
+    .s_axis_tdata({ts_nsec_gray_rx, ts_sec_gray_rx}),
     .s_axis_tkeep(8'b1),
     .s_axis_tvalid(s_axis_ts_tvalid),
     .s_axis_tready(),
