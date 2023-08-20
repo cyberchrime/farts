@@ -46,7 +46,7 @@ class TB:
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.axi_clk, dut.axi_rst)
 
         cocotb.start_soon(Clock(dut.axi_clk, 7, units="ns").start())
-        cocotb.start_soon(Clock(dut.counter_clk, 5, units="ns").start())
+        cocotb.start_soon(Clock(dut.counter_clk, 8, units="ns").start())
 
         self.set_speed(speed)
 

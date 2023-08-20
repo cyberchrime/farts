@@ -65,7 +65,7 @@ class TB(object):
         cocotb.start_soon(Clock(dut.phy1_rgmii_rx_clk, 8, units=PERIOD_UNITS).start())
         cocotb.start_soon(Clock(dut.phy2_rgmii_rx_clk, 8, units=PERIOD_UNITS).start())
         cocotb.start_soon(Clock(dut.axi_clk, AXI_PERIOD, units=PERIOD_UNITS).start())
-        cocotb.start_soon(Clock(dut.counter_clk, 5, units=PERIOD_UNITS).start())
+        cocotb.start_soon(Clock(dut.counter_clk, 8, units=PERIOD_UNITS).start())
 
         # RGMII interfaces
         self.rgmii1_source = RgmiiSource(dut.phy1_rgmii_rxd, dut.phy1_rgmii_rx_ctl, dut.phy1_rgmii_rx_clk, dut.axi_rst)

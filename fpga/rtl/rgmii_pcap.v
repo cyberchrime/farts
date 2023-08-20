@@ -299,6 +299,7 @@ wire axis_timestamp_tvalid = s_good_frame || s_bad_frame || s_overflow;
 wire axis_timestamp_async_tvalid = s_good_frame;
 
 wire s_axis_ts_tvalid;
+wire [31:0] ts_nsec_rx_shifted = {ts_nsec_rx[28:0], 3'b0};
 
 // This FIFO is used to temporarily store the timestamps until the packet FIFO
 // knows whether is dropping the corresponding frame or keeping it
@@ -322,7 +323,7 @@ timestamp_fifo (
     .rst(rx_rst),
 
     // AXI input
-    .s_axis_tdata({ts_nsec_gray_rx, ts_sec_gray_rx}),
+    .s_axis_tdata({ts_nsec_rx_shifted, ts_sec_rx}),
     .s_axis_tkeep(8'b1),
     .s_axis_tvalid(s_axis_ts_tvalid),
     .s_axis_tready(),
