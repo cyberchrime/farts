@@ -145,8 +145,8 @@ async def run_test_continuous(dut):
         tb.rgmii2_source.send_nowait(test_frame)
 
     i = 0
-    expected_rgmii1_length = 80
-    expected_rgmii2_length = 80
+    expected_rgmii1_length = 84
+    expected_rgmii2_length = 84
 
     while True:
         try:
@@ -188,8 +188,8 @@ async def run_test_continuous(dut):
                     f" expected {expected_rgmii1_length} or {expected_rgmii2_length}" \
                     f" at descriptor {i}"
 
-            test_frame = test_frames[expected_length-80]
-            assert ram_content[16:] == test_frame, "Wrong payload"
+            test_frame = test_frames[expected_length-84]
+            assert ram_content[16:-4] == test_frame, "Wrong payload"
 
             tb.axi_ram.write(dma_desc_addr, b"\xaa" * (dma_desc_len + 16))
 
