@@ -19,6 +19,14 @@ be used by anyone under the GPLv3 license. Please also note the
 licenses of the subprojects.
 
 
+## Feature Overview
+
+- Relative timestamping with 8ns accuracy
+- low and constant byte forwarding delay of 1μs
+- packet stream saved as PCAP file
+- Podman/Docker based build system
+
+
 ## Requirements
 
 - PC running a Linux based OS (other OSes are untested)
@@ -101,3 +109,28 @@ tar xf core-image-minimal-zedboard-zynq7.tar.gz -C /<mnt-path>/RootFS
 ```
 
 
+## Usage
+
+To start sniffing, connect the device in between two other Ethernet devices.
+Additionally, connect a micro USB cable to the board and connect via a serial
+console, e.g. with `picocom`:
+
+```
+picocom -b 115200 /dev/ttyUSB0
+```
+
+Then login to the console with user `root` — no password required. Afterwards,
+start sniffing with
+
+```
+file=capture.pcap; header > $file; cat /dev/sniffer >> $file
+```
+
+To stop monitoring, simply press `CTRL-C`.
+
+It is possible to view some statistics about the previous capture in the files 
+represented located in this directory:
+
+```
+/sys/devices/soc0/40000000.sniffer/
+```
